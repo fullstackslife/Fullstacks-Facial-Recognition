@@ -1,2 +1,2 @@
-web: bash start_railway.sh
+web: python3 railway_start.py
 

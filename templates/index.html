@@ -141,6 +141,43 @@
         </footer>
     </div>
 
+    <!-- Camera Permission Modal -->
+    <div id="permissionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📷 Camera Permission Required</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Camera access is required for face detection to work.</p>
+                <div class="instructions">
+                    <h3>How to enable camera access:</h3>
+                    <ol>
+                        <li><strong>Look for the browser's permission prompt</strong> (usually in the address bar or as a popup)</li>
+                        <li><strong>Click "Allow"</strong> when asked for camera permission</li>
+                        <li><strong>If you don't see a prompt:</strong>
+                            <ul>
+                                <li><strong>Chrome/Edge:</strong> Click the camera icon (🚫 or 📷) in the address bar → Allow</li>
+                                <li><strong>Firefox:</strong> Click the shield icon in the address bar → Permissions → Allow camera</li>
+                                <li><strong>Safari:</strong> Safari → Settings → Websites → Camera → Allow for this site</li>
+                            </ul>
+                        </li>
+                        <li><strong>Refresh the page</strong> after granting permission</li>
+                    </ol>
+                </div>
+                <div class="modal-actions">
+                    <button id="requestPermissionModalBtn" class="btn btn-primary">
+                        <span class="btn-icon">📷</span>
+                        Request Camera Access
+                    </button>
+                    <button id="dismissModalBtn" class="btn btn-secondary">
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

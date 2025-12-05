@@ -26,6 +26,10 @@ class FaceDetectionApp {
         this.crossReferencePanel = document.getElementById('crossReferencePanel');
         this.validationStatus = document.getElementById('validationStatus');
         this.validationConfidence = document.getElementById('validationConfidence');
+        this.permissionModal = document.getElementById('permissionModal');
+        this.closeModalBtn = document.getElementById('closeModal');
+        this.dismissModalBtn = document.getElementById('dismissModalBtn');
+        this.requestPermissionModalBtn = document.getElementById('requestPermissionModalBtn');
         
         // API base URL - use Railway backend if available, otherwise use current origin
         this.apiBaseUrl = window.API_BASE_URL || '';
@@ -54,22 +58,39 @@ class FaceDetectionApp {
         // Set up event listeners
         if (this.requestPermissionBtn) {
             this.requestPermissionBtn.addEventListener('click', async () => {
-                this.requestPermissionBtn.disabled = true;
-                this.requestPermissionBtn.textContent = 'Requesting...';
-                const granted = await this.requestCameraPermission();
-                if (granted) {
-                    // Reload cameras to get proper labels
-                    await this.loadCameras();
-                    // Hide permission button, show start button
-                    this.requestPermissionBtn.style.display = 'none';
-                    this.startBtn.style.display = 'inline-flex';
-                    this.updateStatus('Camera ready - Click Start to begin', true);
-                } else {
-                    this.requestPermissionBtn.disabled = false;
-                    this.requestPermissionBtn.innerHTML = '<span class="btn-icon">📷</span>Request Camera Access';
+                await this.handlePermissionRequest(this.requestPermissionBtn);
+            });
+        }
+        
+        // Modal event listeners
+        if (this.closeModalBtn) {
+            this.closeModalBtn.addEventListener('click', () => this.hidePermissionModal());
+        }
+        if (this.dismissModalBtn) {
+            this.dismissModalBtn.addEventListener('click', () => this.hidePermissionModal());
+        }
+        if (this.requestPermissionModalBtn) {
+            this.requestPermissionModalBtn.addEventListener('click', async () => {
+                await this.handlePermissionRequest(this.requestPermissionModalBtn);
+            });
+        }
+        
+        // Close modal when clicking outside
+        if (this.permissionModal) {
+            this.permissionModal.addEventListener('click', (e) => {
+                if (e.target === this.permissionModal) {
+                    this.hidePermissionModal();
                 }
             });
         }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.permissionModal && this.permissionModal.style.display === 'flex') {
+                this.hidePermissionModal();
+            }
+        });
+        
         this.startBtn.addEventListener('click', () => this.start());
         this.stopBtn.addEventListener('click', () => this.stop());
         this.cameraSelect.addEventListener('change', (e) => {
@@ -148,6 +169,8 @@ class FaceDetectionApp {
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
                 errorMessage += 'Please allow camera access in your browser settings and refresh the page.';
                 this.updateStatus('Camera Permission Denied', false);
+                // Show modal with instructions
+                setTimeout(() => this.showPermissionModal(), 500);
             } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
                 errorMessage += 'No camera found. Please connect a camera and refresh the page.';
                 this.updateStatus('No Camera Found', false);
@@ -290,6 +313,13 @@ class FaceDetectionApp {
             return;
         }
         
+        // Check if we have permission before trying to start
+        const hasPermission = await this.checkCameraPermission();
+        if (!hasPermission) {
+            this.showPermissionModal();
+            return;
+        }
+        
         try {
             // Request camera access
             const constraints = {
@@ -345,6 +375,9 @@ class FaceDetectionApp {
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
                 errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
                 this.updateStatus('Permission Denied', false);
+                // Show modal with instructions
+                this.showPermissionModal();
+                return; // Don't show alert, modal has instructions
             } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
                 errorMessage = 'No camera found. Please connect a camera device.';
                 this.updateStatus('No Camera Found', false);
@@ -639,6 +672,54 @@ class FaceDetectionApp {
         }
         if (this.crossReferencePanel) {
             this.crossReferencePanel.style.display = 'none';
+        }
+    }
+    
+    showPermissionModal() {
+        /**Show the camera permission modal with instructions*/
+        if (this.permissionModal) {
+            this.permissionModal.style.display = 'flex';
+            this.permissionModal.classList.add('show');
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    hidePermissionModal() {
+        /**Hide the camera permission modal*/
+        if (this.permissionModal) {
+            this.permissionModal.style.display = 'none';
+            this.permissionModal.classList.remove('show');
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+    }
+    
+    async handlePermissionRequest(button) {
+        /**Handle permission request from any button (main button or modal button)*/
+        if (button) {
+            const originalHTML = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<span class="btn-icon">⏳</span>Requesting...';
+            
+            const granted = await this.requestCameraPermission();
+            
+            if (granted) {
+                // Reload cameras to get proper labels
+                await this.loadCameras();
+                // Hide permission button, show start button
+                if (this.requestPermissionBtn) {
+                    this.requestPermissionBtn.style.display = 'none';
+                }
+                if (this.startBtn) {
+                    this.startBtn.style.display = 'inline-flex';
+                }
+                this.updateStatus('Camera ready - Click Start to begin', true);
+                this.hidePermissionModal();
+            } else {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            }
         }
     }
 }
