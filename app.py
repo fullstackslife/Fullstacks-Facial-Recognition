@@ -2,12 +2,13 @@
 Real-time Face Detection & Analysis Web Application
 Flask backend with OpenCV and MediaPipe for facial analysis
 """
+import base64
+import json
+import os
 import cv2
 import numpy as np
 import mediapipe as mp
-from flask import Flask, render_template, Response, jsonify
-import base64
-import json
+from flask import Flask, render_template, Response, jsonify, request
 
 app = Flask(__name__)
 
@@ -85,7 +86,7 @@ class FaceAnalyzer:
             self.prev_left_eye_ratio = ear
             
             return blink_detected, self.blink_counter, ear
-        except:
+        except (IndexError, ValueError, AttributeError):
             return False, self.blink_counter, 0
     
     def estimate_head_pose(self, landmarks, img_width, img_height):
@@ -254,8 +255,6 @@ def video_feed():
 @app.route('/analyze_frame', methods=['POST'])
 def analyze_frame():
     """Analyze a single frame from browser camera"""
-    from flask import request
-    
     try:
         # Get image data from request
         data = request.get_json()
@@ -294,4 +293,7 @@ def health():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Debug mode should only be enabled in development
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
