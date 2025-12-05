@@ -7,7 +7,7 @@ import base64
 import sys
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Try to import OpenCV and face detection modules with error handling
 CV2_AVAILABLE = False
@@ -214,10 +214,40 @@ def index():
 def serve_static(path):
     """Explicitly serve static files for Vercel compatibility"""
     try:
+        # Handle nested paths like css/style.css or js/app.js
+        response = app.send_static_file(path)
+        
+        # Set proper content type based on file extension
+        if path.endswith('.css'):
+            response.headers['Content-Type'] = 'text/css; charset=utf-8'
+        elif path.endswith('.js'):
+            response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+        elif path.endswith('.png'):
+            response.headers['Content-Type'] = 'image/png'
+        elif path.endswith('.jpg') or path.endswith('.jpeg'):
+            response.headers['Content-Type'] = 'image/jpeg'
+        
+        # Add CORS headers
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        
+        return response
+    except Exception as e:
+        print(f"Error serving static file {path}: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"File not found: {path}", 404
+
+@app.route('/api/static')
+def api_serve_static():
+    """API endpoint for serving static files (Vercel routing workaround)"""
+    path = request.args.get('path', '')
+    if not path:
+        return "Path parameter required", 400
+    try:
         return app.send_static_file(path)
     except Exception as e:
         print(f"Error serving static file {path}: {e}")
-        return "File not found", 404
+        return f"File not found: {path}", 404
 
 @app.route('/api/process_frame', methods=['POST'])
 def process_frame():
