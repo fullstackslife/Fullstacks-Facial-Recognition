@@ -279,3 +279,4 @@ class CameraCapabilities:
         
         return min(100, base_score)
 
+
