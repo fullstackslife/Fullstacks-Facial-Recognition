@@ -9,6 +9,7 @@ class FaceDetectionApp {
         this.processedCtx = null;
         this.startBtn = document.getElementById('startBtn');
         this.stopBtn = document.getElementById('stopBtn');
+        this.requestPermissionBtn = document.getElementById('requestPermissionBtn');
         this.cameraSelect = document.getElementById('cameraSelect');
         this.faceCountEl = document.getElementById('faceCount');
         this.uniqueFacesEl = document.getElementById('uniqueFaces');
@@ -47,10 +48,28 @@ class FaceDetectionApp {
         // Create video element and canvas for display
         this.setupVideoElements();
         
-        // Load available cameras
+        // Load available cameras (may not have labels until permission granted)
         await this.loadCameras();
         
         // Set up event listeners
+        if (this.requestPermissionBtn) {
+            this.requestPermissionBtn.addEventListener('click', async () => {
+                this.requestPermissionBtn.disabled = true;
+                this.requestPermissionBtn.textContent = 'Requesting...';
+                const granted = await this.requestCameraPermission();
+                if (granted) {
+                    // Reload cameras to get proper labels
+                    await this.loadCameras();
+                    // Hide permission button, show start button
+                    this.requestPermissionBtn.style.display = 'none';
+                    this.startBtn.style.display = 'inline-flex';
+                    this.updateStatus('Camera ready - Click Start to begin', true);
+                } else {
+                    this.requestPermissionBtn.disabled = false;
+                    this.requestPermissionBtn.innerHTML = '<span class="btn-icon">📷</span>Request Camera Access';
+                }
+            });
+        }
         this.startBtn.addEventListener('click', () => this.start());
         this.stopBtn.addEventListener('click', () => this.stop());
         this.cameraSelect.addEventListener('change', (e) => {
@@ -84,8 +103,74 @@ class FaceDetectionApp {
             this.selectedCamera2Id = e.target.value;
         });
         
+        // Check if we need to show permission button
+        const hasPermission = await this.checkCameraPermission();
+        if (!hasPermission && this.requestPermissionBtn) {
+            this.requestPermissionBtn.style.display = 'inline-flex';
+            this.startBtn.style.display = 'none';
+        }
+        
         // Initial status
         this.updateStatus('Ready', false);
+    }
+    
+    async checkCameraPermission() {
+        /**Check if we have camera permission by trying to enumerate devices with labels*/
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            // If we have labels, permission was granted
+            return videoDevices.some(device => device.label && device.label.length > 0);
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async requestCameraPermission() {
+        /**Request camera permission to get proper device labels*/
+        try {
+            // Request a temporary stream to trigger permission prompt
+            // This allows us to get proper camera labels
+            const tempStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user' } 
+            });
+            
+            // Stop the temporary stream immediately
+            tempStream.getTracks().forEach(track => track.stop());
+            
+            this.updateStatus('Camera permission granted', true);
+            return true;
+        } catch (error) {
+            console.error('Camera permission error:', error);
+            
+            let errorMessage = 'Camera access is required for face detection. ';
+            
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                errorMessage += 'Please allow camera access in your browser settings and refresh the page.';
+                this.updateStatus('Camera Permission Denied', false);
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                errorMessage += 'No camera found. Please connect a camera and refresh the page.';
+                this.updateStatus('No Camera Found', false);
+            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                errorMessage += 'Camera is being used by another application. Please close other apps using the camera.';
+                this.updateStatus('Camera In Use', false);
+            } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+                errorMessage += 'Camera does not support the required settings.';
+                this.updateStatus('Camera Not Supported', false);
+            } else {
+                errorMessage += `Error: ${error.message}`;
+                this.updateStatus('Camera Error', false);
+            }
+            
+            // Show user-friendly error message
+            if (this.statusText) {
+                this.statusText.textContent = errorMessage;
+            }
+            
+            // Show alert for permission errors
+            alert(errorMessage);
+            return false;
+        }
     }
     
     setupVideoElements() {
@@ -129,19 +214,34 @@ class FaceDetectionApp {
     async loadCameras() {
         try {
             // Get available cameras from browser
+            // Note: Labels may be empty until permission is granted
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            if (videoDevices.length === 0) {
+                this.cameraSelect.innerHTML = '<option value="">No cameras found. Please grant camera permission.</option>';
+                return;
+            }
             
             this.availableCameras = videoDevices.map((device, index) => ({
                 deviceId: device.deviceId,
                 label: device.label || `Camera ${index + 1}`,
-                index: index
+                index: index,
+                hasLabel: !!device.label  // Track if we have a proper label
             }));
+            
+            // Check if we have labels (permission granted)
+            const hasLabels = this.availableCameras.some(cam => cam.hasLabel);
+            if (!hasLabels) {
+                // Update status to prompt for permission
+                this.updateStatus('Click "Request Camera Access" to enable cameras', false);
+            }
             
             this.populateCameraSelect(this.availableCameras);
         } catch (error) {
             console.error('Error loading cameras:', error);
-            this.cameraSelect.innerHTML = '<option value="">Error loading cameras</option>';
+            this.cameraSelect.innerHTML = '<option value="">Error loading cameras. Please grant permission.</option>';
+            this.updateStatus('Error loading cameras', false);
         }
     }
     
@@ -239,7 +339,39 @@ class FaceDetectionApp {
             
         } catch (error) {
             console.error('Error starting camera:', error);
-            alert('Error accessing camera: ' + error.message);
+            
+            let errorMessage = 'Error accessing camera: ';
+            
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
+                this.updateStatus('Permission Denied', false);
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                errorMessage = 'No camera found. Please connect a camera device.';
+                this.updateStatus('No Camera Found', false);
+            } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                errorMessage = 'Camera is being used by another application. Please close other apps.';
+                this.updateStatus('Camera In Use', false);
+            } else if (error.name === 'OverconstrainedError') {
+                errorMessage = 'Camera does not support the requested settings. Trying with default settings...';
+                // Try again with less specific constraints
+                try {
+                    const fallbackConstraints = {
+                        video: {
+                            deviceId: { exact: this.selectedCameraId }
+                        }
+                    };
+                    this.stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                    this.videoElement.srcObject = this.stream;
+                    // Continue with setup...
+                    return;
+                } catch (fallbackError) {
+                    errorMessage = 'Camera access failed. Please try a different camera.';
+                }
+            } else {
+                errorMessage += error.message;
+            }
+            
+            alert(errorMessage);
             this.updateStatus('Camera Error', false);
         }
     }
