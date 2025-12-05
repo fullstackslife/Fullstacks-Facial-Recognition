@@ -179,11 +179,23 @@ Or use Docker with camera passthrough (see DEPLOYMENT.md).
 
 ## 📚 Next Steps
 
-- Set up custom domains
+- ✅ **Set up custom domain**: See [DOMAIN_SETUP.md](DOMAIN_SETUP.md) for configuring `fullstacks.click`
 - Configure environment variables
 - Set up monitoring
 - Add authentication (if needed)
 
 For detailed deployment options, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## 🌐 Custom Domain Setup
+
+Your deployment is configured to use `fullstacks.click` as the primary domain.
+
+**Quick Setup:**
+1. Go to Vercel Dashboard → Settings → Domains
+2. Add `fullstacks.click`
+3. Add the DNS record provided by Vercel to your domain registrar
+4. Wait for DNS propagation (5-30 minutes)
+
+For complete instructions, see [DOMAIN_SETUP.md](DOMAIN_SETUP.md).
 
 

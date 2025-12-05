@@ -70,7 +70,13 @@ current_analysis = {}
 
 # CORS support for client-side camera
 from flask_cors import CORS
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": [
+    "https://fullstacks.click",
+    "https://www.fullstacks.click",
+    "https://fullstacks-facial-recognition.vercel.app",
+    "http://localhost:8080",
+    "http://localhost:3000"
+]}})
 
 def base64_to_image(base64_string):
     """Convert base64 string to OpenCV image"""
