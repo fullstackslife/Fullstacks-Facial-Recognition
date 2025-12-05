@@ -1,30 +1,59 @@
 from flask import Flask, render_template, Response, jsonify, request
-import cv2
 import threading
 import numpy as np
 from collections import deque
 import time
 import base64
+import sys
+import os
 
 app = Flask(__name__)
 
-# Initialize face detector and analyzer
-from face_detection import FaceDetector
-from face_analyzer import FaceAnalyzer
-from facial_features import FacialFeatureAnalyzer
-from advanced_tracking import AdvancedFaceTracker
-from micro_tracking import MicroExpressionTracker
-from quadrant_tracking import QuadrantTracker, EyeTracker, HeadPoseTracker
-from dual_camera import DualCameraTracker
-detector = FaceDetector()
-analyzer = FaceAnalyzer()
-feature_analyzer = FacialFeatureAnalyzer()
-advanced_tracker = AdvancedFaceTracker()
-micro_tracker = MicroExpressionTracker()
-quadrant_tracker = QuadrantTracker()
-eye_tracker = EyeTracker()
-head_pose_tracker = HeadPoseTracker()
-dual_camera_tracker = DualCameraTracker()
+# Try to import OpenCV and face detection modules with error handling
+CV2_AVAILABLE = False
+FACE_DETECTION_AVAILABLE = False
+
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: OpenCV not available: {e}")
+    CV2_AVAILABLE = False
+
+# Initialize face detector and analyzer (with error handling)
+detector = None
+analyzer = None
+feature_analyzer = None
+advanced_tracker = None
+micro_tracker = None
+quadrant_tracker = None
+eye_tracker = None
+head_pose_tracker = None
+dual_camera_tracker = None
+
+if CV2_AVAILABLE:
+    try:
+        from face_detection import FaceDetector
+        from face_analyzer import FaceAnalyzer
+        from facial_features import FacialFeatureAnalyzer
+        from advanced_tracking import AdvancedFaceTracker
+        from micro_tracking import MicroExpressionTracker
+        from quadrant_tracking import QuadrantTracker, EyeTracker, HeadPoseTracker
+        from dual_camera import DualCameraTracker
+        
+        detector = FaceDetector()
+        analyzer = FaceAnalyzer()
+        feature_analyzer = FacialFeatureAnalyzer()
+        advanced_tracker = AdvancedFaceTracker()
+        micro_tracker = MicroExpressionTracker()
+        quadrant_tracker = QuadrantTracker()
+        eye_tracker = EyeTracker()
+        head_pose_tracker = HeadPoseTracker()
+        dual_camera_tracker = DualCameraTracker()
+        FACE_DETECTION_AVAILABLE = True
+    except Exception as e:
+        print(f"Warning: Face detection modules not available: {e}")
+        FACE_DETECTION_AVAILABLE = False
 
 # Store previous quadrants for movement tracking
 previous_quadrants = {}
@@ -45,6 +74,8 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 def base64_to_image(base64_string):
     """Convert base64 string to OpenCV image"""
+    if not CV2_AVAILABLE:
+        return None
     try:
         # Remove data URL prefix if present
         if ',' in base64_string:
@@ -65,6 +96,8 @@ def base64_to_image(base64_string):
 
 def image_to_base64(image):
     """Convert OpenCV image to base64 string"""
+    if not CV2_AVAILABLE:
+        return None
     try:
         _, buffer = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 85])
         image_base64 = base64.b64encode(buffer).decode('utf-8')
@@ -90,6 +123,8 @@ def draw_corner_brackets(frame, x, y, w, h, color, thickness=2, length=20):
 
 def draw_enhanced_detections(frame, analysis):
     """Draw detection boxes and tracking info on frame"""
+    if not CV2_AVAILABLE:
+        return frame
     if 'faces' not in analysis or not analysis['faces']:
         return frame
     
@@ -165,11 +200,19 @@ def serialize_value(value):
 @app.route('/')
 def index():
     """Serve the main page"""
+    if not FACE_DETECTION_AVAILABLE:
+        return render_template('index.html', error_message="Face detection is not available in this environment. Please use Railway or a local deployment.")
     return render_template('index.html')
 
 @app.route('/api/process_frame', methods=['POST'])
 def process_frame():
     """Process a frame sent from the client browser"""
+    if not FACE_DETECTION_AVAILABLE:
+        return jsonify({
+            'status': 'error', 
+            'message': 'Face detection is not available in Vercel serverless environment. Please deploy to Railway or use local deployment.'
+        }), 503
+    
     try:
         data = request.get_json()
         
@@ -217,6 +260,8 @@ def process_frame():
         
     except Exception as e:
         print(f"Error processing frame: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/facial_features')

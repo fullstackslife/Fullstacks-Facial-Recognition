@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎥 Face Detection Camera</h1>
+            <p class="subtitle">Real-time facial detection using your webcam</p>
+        </header>
+
+        <main class="main-layout">
+            <!-- Left Side: Video Feed -->
+            <div class="video-section">
+                <div class="video-wrapper">
+                    <!-- Video and canvas elements will be created by JavaScript -->
+                    <div class="overlay">
+                        <div class="status-indicator" id="statusIndicator">
+                            <span class="status-dot"></span>
+                            <span id="statusText">Initializing...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="camera-selector">
+                    <label for="cameraSelect">Camera:</label>
+                    <select id="cameraSelect" class="camera-select">
+                        <option value="">Loading cameras...</option>
+                    </select>
+                </div>
+                <div class="dual-camera-controls">
+                    <label>
+                        <input type="checkbox" id="dualCameraMode"> Enable Dual Camera Mode
+                    </label>
+                    <select id="camera2Select" class="camera-select" disabled>
+                        <option value="">Select 2nd Camera...</option>
+                    </select>
+                </div>
+                <div class="camera-recommendations" id="cameraRecommendations" style="display: none;">
+                    <div class="recommendations-header">💡 Recommended Pairings</div>
+                    <div id="recommendationsList"></div>
+                </div>
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary">
+                        <span class="btn-icon">▶</span>
+                        Start
+                    </button>
+                    <button id="stopBtn" class="btn btn-secondary" disabled>
+                        <span class="btn-icon">⏸</span>
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Information Panels -->
+            <div class="info-section">
+                <!-- Quick Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card-compact">
+                        <div class="stat-label-compact">Faces</div>
+                        <div class="stat-value-compact" id="faceCount">0</div>
+                    </div>
+                    <div class="stat-card-compact">
+                        <div class="stat-label-compact">Unique</div>
+                        <div class="stat-value-compact" id="uniqueFaces">0</div>
+                    </div>
+                    <div class="stat-card-compact">
+                        <div class="stat-label-compact">Max</div>
+                        <div class="stat-value-compact" id="maxFaces">0</div>
+                    </div>
+                    <div class="stat-card-compact">
+                        <div class="stat-label-compact">Total</div>
+                        <div class="stat-value-compact" id="totalDetections">0</div>
+                    </div>
+                </div>
+
+                <!-- Analytics Compact -->
+                <div class="analytics-compact">
+                    <div class="analytics-header-compact">
+                        <span>📊 Session</span>
+                        <button id="resetStatsBtn" class="btn-reset-small">Reset</button>
+                    </div>
+                    <div class="analytics-grid-compact">
+                        <div class="analytics-item-compact">
+                            <span class="analytics-label-compact">Duration:</span>
+                            <span class="analytics-value-compact" id="sessionDuration">0s</span>
+                        </div>
+                        <div class="analytics-item-compact">
+                            <span class="analytics-label-compact">Rate:</span>
+                            <span class="analytics-value-compact" id="avgFacesPerSec">0.0/s</span>
+                        </div>
+                        <div class="analytics-item-compact">
+                            <span class="analytics-label-compact">Status:</span>
+                            <span class="analytics-value-compact" id="connectionStatus">Ready</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cross-Reference Validation -->
+                <div id="crossReferencePanel" class="cross-reference-panel" style="display: none;">
+                    <div class="analytics-header-compact">
+                        <span>🔍 Cross-Reference Validation</span>
+                    </div>
+                    <div id="crossReferenceContent" class="analytics-grid-compact">
+                        <div class="analytics-item-compact">
+                            <span class="analytics-label-compact">Status:</span>
+                            <span class="analytics-value-compact" id="validationStatus">Not Active</span>
+                        </div>
+                        <div class="analytics-item-compact">
+                            <span class="analytics-label-compact">Confidence:</span>
+                            <span class="analytics-value-compact" id="validationConfidence">N/A</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Facial Features Panel -->
+                <div class="features-panel-compact">
+                    <h3 class="panel-title">😊 Facial Analysis</h3>
+                    <div id="facialFeatures" class="features-list">
+                        <div class="feature-placeholder-compact">
+                            <p>Start detection to see analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Face Detection powered by OpenCV & Flask</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
+
