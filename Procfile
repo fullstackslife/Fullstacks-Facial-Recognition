@@ -1,2 +1,2 @@
-web: python3 railway_start.py
+web: sh -c 'PORT=${PORT:-8080} exec gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120'
 
