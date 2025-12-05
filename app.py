@@ -210,6 +210,15 @@ def index():
         return render_template('index.html', error_message="Face detection is not available in this environment. Please use Railway or a local deployment.")
     return render_template('index.html')
 
+@app.route('/static/<path:path>')
+def serve_static(path):
+    """Explicitly serve static files for Vercel compatibility"""
+    try:
+        return app.send_static_file(path)
+    except Exception as e:
+        print(f"Error serving static file {path}: {e}")
+        return "File not found", 404
+
 @app.route('/api/process_frame', methods=['POST'])
 def process_frame():
     """Process a frame sent from the client browser"""

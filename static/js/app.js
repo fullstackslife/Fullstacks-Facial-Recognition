@@ -26,6 +26,9 @@ class FaceDetectionApp {
         this.validationStatus = document.getElementById('validationStatus');
         this.validationConfidence = document.getElementById('validationConfidence');
         
+        // API base URL - use Railway backend if available, otherwise use current origin
+        this.apiBaseUrl = window.API_BASE_URL || 'https://web-production-7c047.up.railway.app' || '';
+        
         this.selectedCameraId = null;
         this.selectedCamera2Id = null;
         this.availableCameras = [];
@@ -276,7 +279,8 @@ class FaceDetectionApp {
             const frameBase64 = this.canvas.toDataURL('image/jpeg', 0.8);
             
             // Send to backend for processing
-            const response = await fetch('/api/process_frame', {
+            const apiUrl = this.apiBaseUrl ? `${this.apiBaseUrl}/api/process_frame` : '/api/process_frame';
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -306,7 +310,8 @@ class FaceDetectionApp {
     startStatisticsPolling() {
         this.statsInterval = setInterval(async () => {
             try {
-                const response = await fetch(`/api/facial_features?session_id=${this.sessionId}`);
+                const apiUrl = this.apiBaseUrl ? `${this.apiBaseUrl}/api/facial_features?session_id=${this.sessionId}` : `/api/facial_features?session_id=${this.sessionId}`;
+                const response = await fetch(apiUrl);
                 const data = await response.json();
                 
                 if (data.status === 'success') {
@@ -454,7 +459,8 @@ class FaceDetectionApp {
     
     async resetStatistics() {
         try {
-            await fetch('/api/reset_stats', {
+            const apiUrl = this.apiBaseUrl ? `${this.apiBaseUrl}/api/reset_stats` : '/api/reset_stats';
+            await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -479,7 +485,8 @@ class FaceDetectionApp {
     startCrossReference() {
         this.crossRefInterval = setInterval(async () => {
             try {
-                const response = await fetch('/api/cross_reference');
+                const apiUrl = this.apiBaseUrl ? `${this.apiBaseUrl}/api/cross_reference` : '/api/cross_reference';
+                const response = await fetch(apiUrl);
                 const data = await response.json();
                 
                 if (data.status === 'success' && data.summary) {
