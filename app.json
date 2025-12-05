@@ -1,0 +1,24 @@
+{
+  "name": "Face Detection & Analysis System",
+  "description": "Real-time face detection and analysis with web interface",
+  "repository": "https://github.com/yourusername/face-detct",
+  "logo": "https://raw.githubusercontent.com/opencv/opencv/master/doc/opencv-logo.png",
+  "keywords": ["face-detection", "opencv", "flask", "computer-vision", "python"],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "env": {
+    "FLASK_ENV": {
+      "value": "production"
+    }
+  }
+}
+
