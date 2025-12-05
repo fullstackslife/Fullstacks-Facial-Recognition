@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Facial Recognition & Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 Real-time Face Detection & Analysis</h1>
+            <p class="subtitle">Multi-face tracking with expression, blink, and head pose detection</p>
+        </header>
+
+        <div class="main-content">
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <video id="webcam" autoplay playsinline></video>
+                    <canvas id="overlay"></canvas>
+                </div>
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary">📹 Start Camera</button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>⏹️ Stop Camera</button>
+                    <button id="captureBtn" class="btn btn-secondary" disabled>📸 Capture Frame</button>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="status-card">
+                    <h3>📊 Detection Status</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Faces Detected:</span>
+                        <span class="stat-value" id="faceCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">FPS:</span>
+                        <span class="stat-value" id="fps">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Status:</span>
+                        <span class="stat-value" id="status">Ready</span>
+                    </div>
+                </div>
+
+                <div class="faces-info" id="facesInfo">
+                    <h3>👤 Face Analysis</h3>
+                    <div id="faceDetails">
+                        <p class="no-faces">No faces detected yet. Click "Start Camera" to begin.</p>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3>✨ Features</h3>
+                    <ul>
+                        <li>✅ Multi-face tracking (up to 5 faces)</li>
+                        <li>✅ Real-time expression detection</li>
+                        <li>✅ Blink counting & detection</li>
+                        <li>✅ Head pose estimation (yaw, pitch, roll)</li>
+                        <li>✅ Face mesh visualization</li>
+                        <li>✅ Bounding box tracking</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>ℹ️ Instructions</h3>
+                    <ol>
+                        <li>Click "Start Camera" to access your webcam</li>
+                        <li>Allow camera permissions in your browser</li>
+                        <li>Position your face in the frame</li>
+                        <li>Watch real-time analysis appear below</li>
+                        <li>Try different expressions and head movements!</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built with Flask + OpenCV + MediaPipe | Python 3.7+ Compatible</p>
+            <p class="tech-stack">🔧 Technologies: Flask, OpenCV, MediaPipe, JavaScript, HTML5 Canvas</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
